@@ -1,0 +1,215 @@
+-- Script de teleporte gerado automaticamente
+-- LocalScript (use em executor ou em StarterPlayerScripts)
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local parent = (gethui and gethui()) or playerGui
+
+-- Coordenadas capturadas
+local DESTINO = Vector3.new(8.000, 200.924, -83.706)
+local NOME = "Assassino Mistérioso"
+
+local SND = {
+	hover = "rbxasset://sounds/electronicpingshort.wav",
+	click = "rbxasset://sounds/snap.wav",
+	open = "rbxasset://sounds/swoosh.wav",
+	teleport = "rbxasset://sounds/swoosh.wav",
+	error = "rbxasset://sounds/bass.wav",
+}
+
+local FULL = UDim2.fromOffset(230, 100)
+local MIN = UDim2.fromOffset(230, 34)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "TeleportMenu"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = parent
+
+local function playSound(id, vol)
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = vol or 0.5
+	s.Parent = gui
+	s:Play()
+	Debris:AddItem(s, 6)
+end
+
+local function tween(obj, time, props, style, dir)
+	local info = TweenInfo.new(time, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
+	local t = TweenService:Create(obj, info, props)
+	t:Play()
+	return t
+end
+
+local function hover(btn, normal, over)
+	btn.MouseEnter:Connect(function()
+		playSound(SND.hover, 0.15)
+		tween(btn, 0.15, { BackgroundTransparency = over })
+	end)
+	btn.MouseLeave:Connect(function()
+		tween(btn, 0.15, { BackgroundTransparency = normal })
+	end)
+end
+
+local main = Instance.new("Frame")
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.Position = UDim2.fromScale(0.5, 0.5)
+main.Size = FULL
+main.BackgroundColor3 = Color3.fromRGB(20, 26, 40)
+main.BackgroundTransparency = 0.2
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = gui
+
+local scale = Instance.new("UIScale")
+scale.Parent = main
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = main
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Transparency = 0.55
+stroke.Thickness = 1.5
+stroke.Parent = main
+
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 34)
+titleBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+titleBar.BackgroundTransparency = 0.9
+titleBar.BorderSizePixel = 0
+titleBar.Parent = main
+
+local title = Instance.new("TextLabel")
+title.BackgroundTransparency = 1
+title.Position = UDim2.fromOffset(10, 0)
+title.Size = UDim2.new(1, -46, 1, 0)
+title.Font = Enum.Font.GothamBold
+title.Text = "Teleporte"
+title.TextColor3 = Color3.fromRGB(235, 240, 255)
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.fromOffset(26, 26)
+minBtn.Position = UDim2.new(1, -32, 0.5, -13)
+minBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.BackgroundTransparency = 0.85
+minBtn.BorderSizePixel = 0
+minBtn.AutoButtonColor = false
+minBtn.Font = Enum.Font.GothamBold
+minBtn.Text = "–"
+minBtn.TextColor3 = Color3.fromRGB(235, 240, 255)
+minBtn.TextSize = 18
+minBtn.Parent = titleBar
+hover(minBtn, 0.85, 0.6)
+
+local body = Instance.new("Frame")
+body.Position = UDim2.fromOffset(0, 34)
+body.Size = UDim2.new(1, 0, 1, -34)
+body.BackgroundTransparency = 1
+body.Parent = main
+
+local tp = Instance.new("TextButton")
+tp.Position = UDim2.fromOffset(12, 12)
+tp.Size = UDim2.new(1, -24, 0, 42)
+tp.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+tp.BackgroundTransparency = 0.82
+tp.BorderSizePixel = 0
+tp.AutoButtonColor = false
+tp.Font = Enum.Font.GothamSemibold
+tp.Text = "Teleportar: " .. NOME
+tp.TextColor3 = Color3.fromRGB(235, 240, 255)
+tp.TextSize = 15
+tp.TextTruncate = Enum.TextTruncate.AtEnd
+tp.Parent = body
+
+local tpStroke = Instance.new("UIStroke")
+tpStroke.Color = Color3.fromRGB(120, 200, 255)
+tpStroke.Transparency = 0.5
+tpStroke.Thickness = 1
+tpStroke.Parent = tp
+
+hover(tp, 0.82, 0.62)
+
+local busy = false
+tp.MouseButton1Click:Connect(function()
+	if busy then return end
+	busy = true
+	playSound(SND.click, 0.6)
+
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		playSound(SND.error, 0.6)
+		busy = false
+		return
+	end
+
+	playSound(SND.teleport, 0.8)
+	tween(scale, 0.12, { Scale = 0.9 })
+	task.wait(0.12)
+
+	local c = player.Character
+	local h = c and c:FindFirstChild("HumanoidRootPart")
+	if h then
+		h.AssemblyLinearVelocity = Vector3.zero
+		h.CFrame = CFrame.new(DESTINO)
+	end
+
+	tween(scale, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
+	busy = false
+end)
+
+local dragging = false
+local dragStart, startPos
+
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	playSound(minimized and SND.click or SND.open, 0.6)
+	if minimized then
+		minBtn.Text = "+"
+		tween(main, 0.3, { Size = MIN }, Enum.EasingStyle.Quint)
+		task.delay(0.15, function()
+			if minimized then body.Visible = false end
+		end)
+	else
+		minBtn.Text = "–"
+		body.Visible = true
+		tween(main, 0.3, { Size = FULL }, Enum.EasingStyle.Quint)
+	end
+end)
